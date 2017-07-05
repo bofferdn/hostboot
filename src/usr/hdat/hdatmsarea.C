@@ -385,12 +385,12 @@ void HdatMsArea::setMsaI2cInfo(
     std::vector<hdatI2cData_t> &i_I2cDevEntries )
 {
     HDAT_ENTER();
-    iv_msaI2cHdr.hdatOffset = 0x0010;      // this is just header of 4 words. arrays start at 0x0010
+    iv_msaI2cHdr.hdatOffset = sizeof(iv_msaI2cHdr); // this is just header of 5 words. arrays start at 0x0014
     iv_msaI2cHdr.hdatArrayCnt = i_I2cDevEntries.size();
     iv_msaI2cHdr.hdatAllocSize = sizeof(hdatI2cData_t);
     iv_msaI2cHdr.hdatActSize = sizeof(hdatI2cData_t);
     iv_msaHostI2cCnt = i_I2cDevEntries.size();
-    iv_msaHostI2cSize = sizeof(hdatHDIFDataArray_t) +
+    iv_msaHostI2cSize = sizeof(iv_msaI2cHdr) +
         (sizeof(hdatI2cData_t) * iv_msaHostI2cCnt);
     HDAT_INF("iv_msaHostI2cCnt=%d, iv_msaHostI2cSize=%d",
         iv_msaHostI2cCnt, iv_msaHostI2cSize);
@@ -650,12 +650,12 @@ void HdatMsArea::commit(UtilMem &i_data)
 
     i_data.write(iv_ecLvl,iv_maxEcCnt * sizeof(hdatMsAreaEcLvl_t));
 
-    i_data.write(&iv_msaI2cHdr, sizeof(hdatHDIFDataArray_t));
+    i_data.write(&iv_msaI2cHdr, sizeof(iv_msaI2cHdr));
 
     if (NULL != iv_msaI2cDataPtr)
     {
         i_data.write(iv_msaI2cDataPtr,
-            (iv_msaHostI2cSize - sizeof(hdatHDIFDataArray_t)));
+            (iv_msaHostI2cSize - sizeof(iv_msaI2cHdr)));
     }
 
     this->endCommit(i_data);
