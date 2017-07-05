@@ -3920,44 +3920,21 @@ void getDeviceInfo( TARGETING::Target* i_i2cMaster,
     TARGETING::Target * sys = NULL;
     TARGETING::targetService().getTopLevelTarget(sys);
 
-    //need to get all targets here, and pull it out.
+    // Need to get all proc targets
     TARGETING::TargetHandleList pChildList;
+
+    TARGETING::PredicateCTM isaProc(TARGETING::CLASS_CHIP,
+        TARGETING::TYPE_PROC);
 
     TARGETING::targetService().getAssociated(pChildList, sys,
                     TARGETING::TargetService::CHILD,
-                    TARGETING::TargetService::ALL);
-    pChildList.push_back(sys);
+                    TARGETING::TargetService::ALL,
+                    &isaProc);
 
     for(TARGETING::TargetHandleList::const_iterator childItr =
         pChildList.begin();
         childItr != pChildList.end(); ++childItr)
     {
-        TARGETING::ATTR_HDAT_I2C_ENGINE_type l_i2cEngine;
-        (*childItr)->tryGetAttr<TARGETING::ATTR_HDAT_I2C_ENGINE>(l_i2cEngine);
-
-        if(l_i2cEngine[0] == 0)
-        {
-            continue;
-        }
-
-        TARGETING::ATTR_HDAT_I2C_MASTER_PORT_type l_i2cMasterPort;
-        (*childItr)->tryGetAttr<TARGETING::ATTR_HDAT_I2C_MASTER_PORT>(
-                                                    l_i2cMasterPort);
-        TARGETING::ATTR_HDAT_I2C_DEVICE_TYPE_type l_i2cDevType;
-        (*childItr)->tryGetAttr<TARGETING::ATTR_HDAT_I2C_DEVICE_TYPE>(
-                                                    l_i2cDevType);
-        TARGETING::ATTR_HDAT_I2C_ADDR_type l_i2cAddr;
-        (*childItr)->tryGetAttr<TARGETING::ATTR_HDAT_I2C_ADDR>(l_i2cAddr);
-        TARGETING::ATTR_HDAT_I2C_SLAVE_PORT_type l_i2cSlavePort;
-        (*childItr)->tryGetAttr<TARGETING::ATTR_HDAT_I2C_SLAVE_PORT>(
-                                                    l_i2cSlavePort);
-        TARGETING::ATTR_HDAT_I2C_BUS_FREQ_type l_i2cBusFreq;
-        (*childItr)->tryGetAttr<TARGETING::ATTR_HDAT_I2C_BUS_FREQ>(
-                                                    l_i2cBusFreq);
-        TARGETING::ATTR_HDAT_I2C_DEVICE_PURPOSE_type l_i2cDevPurpose;
-        (*childItr)->tryGetAttr<TARGETING::ATTR_HDAT_I2C_DEVICE_PURPOSE>(
-                                                    l_i2cDevPurpose);
-
         uint8_t l_arrayLength =
                 (*childItr)->getAttr<TARGETING::ATTR_HDAT_I2C_ELEMENTS>();
 
@@ -3966,10 +3943,66 @@ void getDeviceInfo( TARGETING::Target* i_i2cMaster,
             //The arrays are empty
             continue;
         }
+
+        bool present = false;
+        TARGETING::ATTR_HDAT_I2C_ENGINE_type l_i2cEngine = {0};
+        present = (*childItr)->tryGetAttr<TARGETING::ATTR_HDAT_I2C_ENGINE>(
+            l_i2cEngine);
+        assert(present,"Target 0x%08X does not have ATTR_HDAT_I2C_ENGINE "
+            "attribute",TARGETING::get_huid(*childItr));
+
+        TARGETING::ATTR_HDAT_I2C_MASTER_PORT_type l_i2cMasterPort = {0};
+        present = (*childItr)->tryGetAttr<TARGETING::ATTR_HDAT_I2C_MASTER_PORT>(
+            l_i2cMasterPort);
+        assert(present,"Target 0x%08X does not have ATTR_HDAT_I2C_MASTER_PORT "
+            "attribute",TARGETING::get_huid(*childItr));
+
+        TARGETING::ATTR_HDAT_I2C_DEVICE_TYPE_type l_i2cDevType;
+        memset(&l_i2cDevType,TARGETING::HDAT_I2C_DEVICE_TYPE_UNKNOWN,
+               sizeof(l_i2cDevType));
+        present = (*childItr)->tryGetAttr<TARGETING::ATTR_HDAT_I2C_DEVICE_TYPE>(
+                                                    l_i2cDevType);
+        assert(present,"Target 0x%08X does not have ATTR_HDAT_I2C_DEVICE_TYPE "
+            "attribute",TARGETING::get_huid(*childItr));
+
+        TARGETING::ATTR_HDAT_I2C_ADDR_type l_i2cAddr = {0};
+        present = (*childItr)->tryGetAttr<TARGETING::ATTR_HDAT_I2C_ADDR>(
+            l_i2cAddr);
+        assert(present,"Target 0x%08X does not have ATTR_HDAT_I2C_ADDR "
+            "attribute",TARGETING::get_huid(*childItr));
+
+        TARGETING::ATTR_HDAT_I2C_SLAVE_PORT_type l_i2cSlavePort = {0};
+        present = (*childItr)->tryGetAttr<TARGETING::ATTR_HDAT_I2C_SLAVE_PORT>(
+            l_i2cSlavePort);
+        assert(present,"Target 0x%08X does not have ATTR_HDAT_I2C_SLAVE_PORT "
+            "attribute",TARGETING::get_huid(*childItr));
+
+        TARGETING::ATTR_HDAT_I2C_BUS_FREQ_type l_i2cBusFreq = {0};
+        present = (*childItr)->tryGetAttr<TARGETING::ATTR_HDAT_I2C_BUS_FREQ>(
+            l_i2cBusFreq);
+        assert(present,"Target 0x%08X does not have ATTR_HDAT_I2C_BUS_FREQ "
+            "attribute",TARGETING::get_huid(*childItr));
+
+        TARGETING::ATTR_HDAT_I2C_DEVICE_PURPOSE_type l_i2cDevPurpose;
+        memset(&l_i2cDevPurpose,TARGETING::HDAT_I2C_DEVICE_PURPOSE_UNKNOWN,
+               sizeof(l_i2cDevPurpose));
+        present = (*childItr)->tryGetAttr<
+            TARGETING::ATTR_HDAT_I2C_DEVICE_PURPOSE>(l_i2cDevPurpose);
+        assert(present,"Target 0x%08X does not have "
+            "ATTR_HDAT_I2C_DEVICE_PURPOSE attribute",
+            TARGETING::get_huid(*childItr));
+
         for(uint8_t l_idx=0;
                     l_idx < l_arrayLength;
                     l_idx++)
         {
+            if(l_i2cEngine[l_idx] == 0)
+            {
+                // We never expose engine 0 devices to host, since they are
+                // owned by SBE
+                continue;
+            }
+
             DeviceInfo_t l_currentDevice;
             l_currentDevice.masterChip = (*childItr);
             l_currentDevice.engine = l_i2cEngine[l_idx];

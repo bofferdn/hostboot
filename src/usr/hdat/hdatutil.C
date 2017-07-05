@@ -1710,7 +1710,19 @@ void hdatGetI2cDeviceInfo(TARGETING::Target* i_pTarget,
             l_hostI2cObj.hdatI2cSlaveDevPurp = l_i2cDevEle.devicePurpose;
             l_hostI2cObj.hdatI2cLinkId       = l_I2cLinkId++;
 
-            o_i2cDevEntries.push_back(l_hostI2cObj);
+            // Don't include the device if the slave address is
+            // invalid
+            if(l_hostI2cObj.hdatI2cSlaveDevAddr == UINT8_MAX)
+            {
+                continue;
+            }
+
+            if(   (i_pTarget == nullptr)
+               || (i_pTarget == l_i2cDevEle.masterChip)
+               )
+            {
+                o_i2cDevEntries.push_back(l_hostI2cObj);
+            }
         }
     }
 
