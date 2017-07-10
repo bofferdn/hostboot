@@ -4041,8 +4041,7 @@ void getDeviceInfo( TARGETING::Target* i_i2cMaster,
         } //end of i2cm
 
 // @TODO RTC 173541: Re-enable
-// #if CONFIG_INCLUDE_XML_OPENPOWER
-#if 0
+ #if CONFIG_INCLUDE_XML_OPENPOWER
 
         TARGETING::ATTR_HDAT_I2C_ELEMENTS_type l_arrayLength = 0;
         auto present = pChipTarget->tryGetAttr<
