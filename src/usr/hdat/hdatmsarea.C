@@ -389,6 +389,7 @@ void HdatMsArea::setMsaI2cInfo(
     iv_msaI2cHdr.hdatArrayCnt = i_I2cDevEntries.size();
     iv_msaI2cHdr.hdatAllocSize = sizeof(hdatI2cData_t);
     iv_msaI2cHdr.hdatActSize = sizeof(hdatI2cData_t);
+    iv_msaI2cHdr.hdatVersion = HOST_I2C_DEV_INFO_VERSION::V2;
     iv_msaHostI2cCnt = i_I2cDevEntries.size();
     iv_msaHostI2cSize = sizeof(iv_msaI2cHdr) +
         (sizeof(hdatI2cData_t) * iv_msaHostI2cCnt);
@@ -585,7 +586,7 @@ uint32_t  HdatMsArea::getMsAreaSize()
 
     l_size += (iv_maxEcCnt * sizeof(hdatMsAreaEcLvl_t));
 
-    l_size += sizeof(hdatHDIFDataArray_t);
+    l_size += sizeof(iv_msaI2cHdr);
 
     l_size += (sizeof(hdatI2cData_t) * iv_msaHostI2cCnt);
 
