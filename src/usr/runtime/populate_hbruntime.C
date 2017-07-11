@@ -68,7 +68,11 @@
 #include <sbeio/runtime/sbe_msg_passing.H>
 #include <kernel/bltohbdatamgr.H>
 #include <util/runtime/util_rt.H>
-
+#include <util/sprintf.H>
+#include <stdio.h>
+#include <sys/task.h>
+#include <sys/time.h>
+#include <console/consoleif.H>
 
 namespace RUNTIME
 {
@@ -1430,7 +1434,7 @@ errlHndl_t populate_TpmInfoByNode()
     ////////////////////////////////////////////////////////////////////////////
     // Section Secure Boot and TPM Instance Info
     ////////////////////////////////////////////////////////////////////////////
-
+size_t skipOffset=0;
     // fill in the values for each Secure Boot TPM Instance Info in the array
     for (auto pTpm : tpmList)
     {
@@ -1522,6 +1526,8 @@ errlHndl_t populate_TpmInfoByNode()
         l_tpmInstInfo->hdatTpmSrtmEventLogEntrySize = logSize;
 
         // advance the current offset to account for the SRTM event log
+        skipOffset=l_currOffset;
+
         l_currOffset += TPM_SRTM_EVENT_LOG_MAX;
 
         // set the DRTM offset to zero as it is not yet supported
@@ -1931,6 +1937,49 @@ errlHndl_t populate_TpmInfoByNode()
 
     // set the total structure length to the current offset
     l_hdatTpmData->hdatHdr.hdatSize = l_currOffset;
+
+    nanosleep(5,0); // Sleep 5 sec
+    TRACFCOMP(g_trac_runtime, "TPM HDAT DUMP");
+    size_t off = 0;
+    uint8_t* addr = reinterpret_cast<uint8_t*>(l_baseAddr);
+    for(size_t remaining = l_hdatTpmData->hdatHdr.hdatSize;
+        remaining > 0;)
+    {
+        size_t sz = 16;
+        if(remaining < 16)
+        {
+            sz = remaining;
+        }
+
+        if(off >= skipOffset+4096 && off < skipOffset+64*1024)
+        {
+            remaining -= sz;
+            off += sz;
+            continue;
+        }
+
+        char b[16] = {0};
+        memcpy(b,addr+off,sz);
+
+        char line[100] = {0};
+        sprintf(line,"%08X | %02X %02X %02X %02X "
+            "%02X %02X %02X %02X  "
+            "%02X %02X %02X %02X "
+            "%02X %02X %02X %02X",
+            off,
+            b[0],b[1],b[2],b[3],
+            b[4],b[5],b[6],b[7],
+            b[8],b[9],b[10],b[11],
+            b[12],b[13],b[14],b[15]
+             );
+
+        TRACFCOMP(g_trac_runtime, "%s",line);
+        CONSOLE::flush();
+
+        remaining -= sz;
+        off += sz;
+        nanosleep(0,50000000); // .05s per 
+    }
 
     } while (0);
 
