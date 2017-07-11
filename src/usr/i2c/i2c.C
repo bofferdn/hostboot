@@ -3858,7 +3858,7 @@ void getDeviceInfo( TARGETING::Target* i_i2cMaster,
             TARGETING::CLASS_CHIP,TARGETING::TYPE_MEMBUF);
 
         TARGETING::PredicatePostfixExpr procOrMembuf;
-        procOrMembuf.push(&procChip).Or().push(&membufChip);
+        procOrMembuf.push(&procChip).push(&membufChip).Or();
 
         TARGETING::targetService().getAssociated(
             chipTargets,
@@ -4041,7 +4041,7 @@ void getDeviceInfo( TARGETING::Target* i_i2cMaster,
         } //end of i2cm
 
 // @TODO RTC 173541: Re-enable
- #if CONFIG_INCLUDE_XML_OPENPOWER
+#if CONFIG_INCLUDE_XML_OPENPOWER
 
         TARGETING::ATTR_HDAT_I2C_ELEMENTS_type l_arrayLength = 0;
         auto present = pChipTarget->tryGetAttr<
