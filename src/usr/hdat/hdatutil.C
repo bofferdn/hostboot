@@ -1786,15 +1786,17 @@ void hdatGetI2cDeviceInfo(
 
     for(auto const& i2cDevice : o_i2cDevEntries)
     {
-        HDAT_INF("I2C device attached to HUID=0x%08X: "
+        HDAT_INF("Unique I2C device attached to HUID=0x%08X: "
             "engine=0x%02X, "
             "port=0x%02X, "
             "speed=0x%04X, "
             "slave type=0x%02X, "
+            "slave address=0x%02X, "
             "slave port=0x%02X, "
             "slave purpose=0x%08X, "
-            "link ID=0x%08X"
-            "SLCA index=0x%04X",
+            "link ID=0x%08X, "
+            "SLCA index=0x%04X, "
+            "slave label=\"%s\"",
             TARGETING::get_huid(i_pTarget),
             i2cDevice.hdatI2cEngine,
             i2cDevice.hdatI2cMasterPort,
@@ -1804,7 +1806,8 @@ void hdatGetI2cDeviceInfo(
             i2cDevice.hdatI2cSlavePort,
             i2cDevice.hdatI2cSlaveDevPurp,
             i2cDevice.hdatI2cLinkId,
-            i2cDevice.hdatI2cSlcaIndex);
+            i2cDevice.hdatI2cSlcaIndex,
+            i2cDevice.hdatI2cLabel);
     }
 
     HDAT_EXIT();
