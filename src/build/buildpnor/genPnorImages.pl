@@ -307,8 +307,25 @@ elsif ($keyTransition{enabled} && $signMode{$DEVELOPMENT})
     }
     elsif ($keyTransition{$PRODUCTION})
     {
-        $OPEN_SIGN_KEY_TRANS_REQUEST .=
-            "$OPEN_PRD_SIGN_PARAMS $sbktDataComponentIdArg";
+        # Begin dev->prod hack for two sets of local keys
+        my $PROD_KEY_DIR = $ENV{'PROD_KEY_DIR'};
+        if(!$PROD_KEY_DIR)
+        {
+            die "dev->prod key transition special patch: "
+                . "PROD_KEY_DIR not defined";
+        }
+
+        $OPEN_SIGN_KEY_TRANS_REQUEST .= "--mode development "
+        . "--hwKeyA $PROD_KEY_DIR/hw_key_a.key "
+        . "--hwKeyB $PROD_KEY_DIR/hw_key_b.key "
+        . "--hwKeyC $PROD_KEY_DIR/hw_key_c.key "
+        . "--swKeyP $PROD_KEY_DIR/sw_key_p.key "
+        . "$sbktDataComponentIdArg";
+
+        # $OPEN_SIGN_KEY_TRANS_REQUEST .=
+        #    "$OPEN_PRD_SIGN_PARAMS $sbktDataComponentIdArg";
+
+        # End hack
     }
 }
 else
